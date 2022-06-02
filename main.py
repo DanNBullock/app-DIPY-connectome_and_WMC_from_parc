@@ -1,35 +1,71 @@
-# set up environment
-import json
-import nibabel as nib
-import dipy
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun  2 17:13:31 2022
 
-from dipy.align.reslice import reslice
-from dipy.data import get_fnames
+@author: dan
+"""
+
+
+import os
+import sys
+
+sys.path.append('wma_pyTools/')
+startDir=os.getcwd()
+#some how set a path to wma pyTools repo directory
+#wmaToolsDir='wma_pyTools'
+#wmaToolsDir='..'
+#os.chdir(wmaToolsDir)
+print(os.getcwd())
+print(os.listdir())
+import wmaPyTools.roiTools
+import wmaPyTools.analysisTools
+import wmaPyTools.segmentationTools
+import wmaPyTools.streamlineTools
+import wmaPyTools.visTools
+import wmaPyTools.genUtils
+
+from dipy.tracking.utils import reduce_labels
+from dipy.tracking import utils
+
+#os.chdir(startDir)
+
+import os
+import json
+import numpy as np
+import nibabel as nib
+import pandas as pd
+
 
 # load inputs from config.json
 with open('config.json') as config_json:
 	config = json.load(config_json)
 
-# Load into variables predefined code inputs
-data_file = str(config['t1'])
- 
-# set the output resolution
-out_res = [ int(v) for v in config['outres'].split(" ")]
+outDir='output'
+if not os.path.exists(outDir):
+    os.makedirs(outDir)
+if not os.path.exists(os.path.join(outDir,'wmc')):
+    os.makedirs(os.path.join(outDir,'wmc'))
+if not os.path.exists(os.path.join(outDir,'connectome')):
+    os.makedirs(os.path.join(outDir,'connectome'))
+    
+parcIn=nib.load(config['parc'])
+lookupTable=wmaPyTools.genUtils.parcJSON_to_LUT(config['label'])
 
-# we load the input T1w that we would like to resample
-img = nib.load(data_file)
+[renumberedAtlasNifti,reducedLookupTable]=wmaPyTools.analysisTools.reduceAtlasAndLookupTable(parcIn,lookupTable,removeAbsentLabels=True)
 
-# we get the data from the nifti file
-input_data   = img.get_data()
-input_affine = img.affine
-input_zooms  = img.header.get_zooms()[:3]
+#load and oreint the streamlines
+inTractogram=nib.streamlines.load(config['track'])
+#try this, previously it may have been making inf values, but that was probably
+#mrtrix misbehaving
+orientedStreams=wmaPyTools.streamlineTools.orientAllStreamlines(inTractogram.streamlines)
 
-# resample the data
-out_data, out_affine = reslice(input_data, input_affine, input_zooms, out_res)
+M, grouping=utils.connectivity_matrix(orientedStreams, np.round(renumberedAtlasNifti.affine,2), label_volume=renumberedAtlasNifti.get_data().astype(int),
+                        symmetric=False,
+                        return_mapping=True,
+                        mapping_as_streamlines=False)
 
-# create the new NIFTI file for the output
-out_img = nib.Nifti1Image(out_data, out_affine)
+classification=wmaPyTools.streamlineTools.wmc_from_DIPY_connectome(grouping,lookupTable)
 
-# save the output file (with the new resolution) to disk
-nib.save(out_img, 'out_dir/t1.nii.gz')
+#what format is network output?
 

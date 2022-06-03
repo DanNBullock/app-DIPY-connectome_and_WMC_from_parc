@@ -1,4 +1,5 @@
 {
-    "t1": "t1.nii.gz",
-    "outres": "1 1 1"
+    "parc": "testdata/aparc+aseg.nii.gz",
+    "track": "testdata/track.tck",
+    "label": "testdata/label.json"
 }

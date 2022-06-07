@@ -63,6 +63,51 @@ M, grouping=utils.connectivity_matrix(orientedStreams, np.round(renumberedAtlasN
                         return_mapping=True,
                         mapping_as_streamlines=False)
 
+#parse threshold
+if 'threshold' in config.keys():
+    if isinstance(config['threshold'],str):
+        if config['threshold'].isnumeric():
+            threshold=float(config['threshold'])
+        else: 
+            threshold=None
+    elif isinstance(config['threshold'],int) or isinstance(config['threshold'],float):
+        threshold=config['threshold']
+    else:
+        threshold=None   
+else:
+    threshold=None
+    
+#now determine if it is count or proportional
+if not threshold== None:
+    #if it's less than 1 its proportional
+    if threshold<1:
+        #we need to convert it to count
+        thresholdCount=int(np.round(threshold*len(orientedStreams)))
+        
+    
+    #otherwise it's count, do nothing
+    else:
+        thresholdCount=threshold
+    
+    #now iterate through 
+    print ('Imposing streamline count threshold of ' +str(thresholdCount) )
+    tempGrouping={}
+    #probably a quicker and easier way to do this just using the M matrix and np.where
+    for iConnections in list(grouping.keys()):
+        #if there are a sufficient number of streams in it
+        if len(grouping[iConnections])>=thresholdCount:
+            #add it to the tempGrouping
+                tempGrouping[iConnections]=grouping[iConnections]
+        else:
+            #do nothing, don't add it
+            pass
+    #set the output
+    grouping=tempGrouping
+    
+    #now threshold the M, set the relevant entries to 0
+    M[M<threshold]=0
+
+
 #classification production
 classification=wmaPyTools.streamlineTools.wmc_from_DIPY_connectome(grouping,reducedLookupTable)
 #save it

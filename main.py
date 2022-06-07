@@ -66,8 +66,8 @@ M, grouping=utils.connectivity_matrix(orientedStreams, np.round(renumberedAtlasN
 #classification production
 classification=wmaPyTools.streamlineTools.wmc_from_DIPY_connectome(grouping,reducedLookupTable)
 #save it
-savemat(os.path.join('wmc','classification.mat'),{ "classification": {"names": classification['names'], "index": classification['index'] }})
-
+savemat(os.path.join('wmc','classification.mat'),{ "classification": {"names": np.array(classification['names'], dtype=np.object), "index": classification['index'] }})
+ 
 #create the conmat
 wmaPyTools.genUtils.bl_conmat_fromDIPYandParc(M,reducedLookupTable,os.path.join('connectome'))
 

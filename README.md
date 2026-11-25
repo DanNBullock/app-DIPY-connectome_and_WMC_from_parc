@@ -3,6 +3,45 @@
 
 # [app name]
 
+<!-- brainlife-app:begin (generated from the App manifest; edit the manifest, not this block) -->
+
+> **Generate a structural connectivity matrix and a White Matter Classification structure for a given parcellation and tractogram.**
+
+Reduces the parcellation to the labels actually present, orients the streamlines and builds a region-by-region streamline count matrix with dipy.tracking.utils.connectivity_matrix. Each connected label pair also becomes a named tract in a white matter classification, so streamlines can be inspected per connection. An optional threshold removes connections with fewer streamlines (a fraction of the total when below 1, a count otherwise). The README is an unfilled template; tractogram and parcellation must be in the same space.
+
+| | |
+|---|---|
+| 📥 **Inputs** | `neuro/parcellation/volume` · `neuro/track/tck` |
+| 📤 **Outputs** | `neuro/wmc` · `neuro/conmat` |
+| 🐳 **Container** | `brainlife/dipy:latest` |
+| ⚙️ **Resources** | 16 CPUs · 2 h walltime |
+| 🔗 **Run it** | [doi.org/10.25663/brainlife.app.640](https://doi.org/10.25663/brainlife.app.640) |
+
+#### 📥 Inputs
+
+| Input | Datatype | Required | Description |
+|---|---|---|---|
+| `parcellation` | `neuro/parcellation/volume` | yes | Volumetric parcellation with label.json naming each label; labels absent from the volume are dropped. Same space as the tractogram. |
+| `tractogram` | `neuro/track/tck` | yes | Whole-brain .tck tractogram. |
+
+#### 📤 Outputs
+
+| Output | Datatype | Description |
+|---|---|---|
+| `wmc` | `neuro/wmc` | White matter classification (classification.mat) with one tract per connected pair of parcels. |
+| `connectome` | `neuro/conmat` | Streamline-count connectivity matrix in brainlife conmat format (CSV with index and label files). |
+
+<details>
+<summary><b>⚙️ Parameters</b> (1)</summary>
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `threshold` | number |  | The threshold to be applied to the connectome generation process. Numbers less than one will be interpreted as proportion of total input tractogram streamline count, numbers larger than 1 will be interpreted as streamline count. |
+
+</details>
+
+<!-- brainlife-app:end -->
+
 ## Overview description
 
 This is where the description of the app goes.  Provide quick summaries of:
